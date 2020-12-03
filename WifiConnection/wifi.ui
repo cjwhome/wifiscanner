@@ -143,7 +143,7 @@
     </item>
    </layout>
   </widget>
-  <widget class="QPushButton" name="m_button_delete">
+  <widget class="QPushButton" name="m_button_scan">
    <property name="geometry">
     <rect>
      <x>585</x>
@@ -199,7 +199,7 @@ Pairing</string>
   <zorder>treeWidgetWiFis</zorder>
   <zorder>m_button_connect</zorder>
   <zorder>layoutWidget</zorder>
-  <zorder>m_button_delete</zorder>
+  <zorder>m_button_scan</zorder>
   <zorder>m_button_check</zorder>
   <zorder>m_button_disconnect</zorder>
   <zorder>m_button_stop</zorder>

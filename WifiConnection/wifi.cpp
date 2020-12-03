@@ -6,14 +6,14 @@ WIFI::WIFI(QWidget *parent) :
     ui(new Ui::WIFI)
 {
     ui->setupUi(this);
-    system("killall wpa_supplicant");
-    system("ifconfig eth0 down");
-    system("ifconfig wlan0 down");
-    system("ifconfig wlan0 up");
-//    findTimer = new QTimer();
-//    findTimer->setInterval(1000);
-//    connect(findTimer,SIGNAL(timeout()),this,SLOT(findActiveWirelesses()));
-//    findTimer->start();
+    //system("killall wpa_supplicant");
+    //system("ifconfig eth0 down");
+    //system("ifconfig wlan0 down");
+    //system("ifconfig wlan0 up");
+    //findTimer = new QTimer();
+    //findTimer->setInterval(1000);
+    //connect(findTimer,SIGNAL(timeout()),this,SLOT(findActiveWirelesses()));
+    //findTimer->start();
     findActiveWirelesses();
 
     //findActiveWirelessesSSID();
@@ -25,25 +25,29 @@ WIFI::~WIFI()
 }
 void WIFI::findActiveWirelesses()
 {
+    qDebug()<<"Finding active wirelesses";
+
     QNetworkConfigurationManager ncm;
     netcfgList = ncm.allConfigurations();
 
     WiFisList.clear();
+    qDebug()<<"Showing netconfigs:";
     ui->m_label_connectshow->setText("...");
     for (int i=0;i< netcfgList.count();i++)
     {
         qDebug()<<netcfgList.at(i).name();
-        if(netcfgList.at(i).name() == "wlan0"){
-            system("ifconfig wlan0 up");
-            ui->m_label_connectshow->setText("Connect!");
-            break;
-        }
+        //if(netcfgList.at(i).name() == "wlan0"){
+        //    system("ifconfig wlan0 up");
+        //    ui->m_label_connectshow->setText("Connect!");
+        //    break;
+        //}
     }
 }
 void WIFI::findActiveWirelessesSSID(){
     int foundCount = 0;
     QByteArray line;
     QTreeWidgetItem *item[125];
+    qDebug()<<"Finding active wireless SSID's";
 
     system("rm wifilist.txt");
     //system("iwlist wlan0 scan | grep SSID >> wifilist.txt");
@@ -55,9 +59,11 @@ void WIFI::findActiveWirelessesSSID(){
     m_SplitString.clear();
     while (!file.atEnd()) {
         line = file.readLine();
-        DataAsString = QString::fromAscii(line.data());
+
+        DataAsString = QString::fromLocal8Bit(line.data());
         //m_SplitString << DataAsString.section('"',1,1,QString::SectionSkipEmpty);
-        if(!DataAsString.section("ESSID",1,1,QString::SectionSkipEmpty).isEmpty()){ //iwlist 로 얻은 wifi 리스트를 구분하기 위해서 QStringList 에 "tap"을 인위적으로 넣어서 ESSID 구분
+        if(!DataAsString.section("ESSID",1,1,QString::SectionSkipEmpty).isEmpty()){ //iwlist
+            //qDebug()<<"ESSID Line from wifilist:"<<DataAsString;
             m_SplitString<<"tap";
             m_SplitString<<DataAsString.section("ESSID",1,1,QString::SectionSkipEmpty).section('"',1,1,QString::SectionSkipEmpty);
             foundCount++;
@@ -76,9 +82,10 @@ void WIFI::findActiveWirelessesSSID(){
             m_SplitString<<DataAsString.section("Signal level=-",1,1,QString::SectionSkipEmpty).section(' ',0,0);
         }
     }
+    //qDebug()<<"After listing ESSIDs";
     ui->treeWidgetWiFis->clear(); //TreeWidget Clear
     int j =1;
-    for(int k = 0 ; k < foundCount ; k++){  //wifi를 찾은 만큼 아이템 갯수 추가
+    for(int k = 0 ; k < foundCount ; k++){  //wifi
         item[k] = new QTreeWidgetItem();
         item[k]->setTextAlignment(Wifi_Number,Qt::AlignVCenter);
         item[k]->setTextAlignment(Wifi_Name,Qt::AlignHCenter);
@@ -88,10 +95,11 @@ void WIFI::findActiveWirelessesSSID(){
         item[k]->setTextAlignment(Wifi_Rule2,Qt::AlignHCenter);
     }
 
-
+    //qDebug()<<"after treewidget clear";
     for(int l = 0 ; l < ui->treeWidgetWiFis->headerItem()->columnCount() ; l++){
         ui->treeWidgetWiFis->resizeColumnToContents(l);
     }
+    //qDebug()<<"After resizing columns";
 //    for(int i=0; i<m_SplitString.size();i++)
 //    {
 //        //bool exist = false;
@@ -129,11 +137,11 @@ void WIFI::findActiveWirelessesSSID(){
 //        item[foundCount]->setText(j++,m_SplitString[i]);
 //        //        }
 //    }
-    foundCount = 0; //wifi를 찾은 만큼 아이템 갯수 추가
+    foundCount = 0; //
     for(int i=0; i<m_SplitString.size();i++)
     {
         if(m_SplitString[i] == "tap" && i>0){
-
+            //qDebug()<<"Tap:"<<QString::number(foundCount);
             item[foundCount]->setText(0,QString::number(foundCount));
             ui->treeWidgetWiFis->addTopLevelItem(item[foundCount]);
             foundCount++;
@@ -142,7 +150,9 @@ void WIFI::findActiveWirelessesSSID(){
         }else if(i == 0){
             continue;
         }else if(m_SplitString[i] == "SIGLEVEL"){
+
             i++;
+            qDebug()<<"Siglevel:"<<m_SplitString[i];
             if(m_SplitString[i].toInt() > 100){
                 item[foundCount]->setIcon(Wifi_Name,QIcon(QPixmap(":/wifi/signal/ping0.png")));
             }
@@ -160,9 +170,17 @@ void WIFI::findActiveWirelessesSSID(){
             }
             continue;
         }
-        item[foundCount]->setText(j++,m_SplitString[i]);
-        //        }
+        qDebug()<<"Column:"<<QString::number(j)<<", splitstring:"<<QString::number(i)<<" is:"<<m_SplitString[i]<<" size:"<<m_SplitString[i].size();
+        qDebug()<<"Size of string trimmed:"<<m_SplitString[i].trimmed().size();
+        if(m_SplitString[i].contains("\x00")){
+            qDebug()<<"Found bad string!!";
+        }else{
+            qDebug("setting text");
+            item[foundCount]->setText(j++,m_SplitString[i]);
+        }
+
     }
+    qDebug()<<"Here!";
 }
 void WIFI::on_m_button_connect_clicked()
 {
@@ -186,13 +204,13 @@ void WIFI::on_m_button_connect_clicked()
     system("rm temp");
     temp = "wpa_passphrase "+ui->m_label_selectSSID->text()+" "+ui->lineedit_password->text()+" >>"+"temp";
     qDebug()<<temp;
-    system(temp.toAscii());
+    system(temp.toLocal8Bit());
     system("ifconfig");
     system("iwconfig");
 
     temp = "iwconfig wlan0 essid "+ui->m_label_selectSSID->text();
     qDebug()<<temp;
-    system(temp.toAscii());
+    system(temp.toLocal8Bit());
     system("ifconfig");
     system("iwconfig");
 //    QFile file2("temp");
@@ -224,7 +242,7 @@ void WIFI::on_m_button_connect_clicked()
     //    }
 temp = "wpa_supplicant -iwlan0 -c temp &";
 qDebug()<<temp;
-system(temp.toAscii());
+system(temp.toLocal8Bit());
 system("ifconfig");
 system("iwconfig");
 system("dhcpcd wlan0");
@@ -267,7 +285,7 @@ void WIFI::on_m_button_check_clicked()
         }else{
             while (!file.atEnd()) {
                 line = file.readLine();
-                DataAsString = QString::fromAscii(line.data());
+                DataAsString = QString::fromLocal8Bit(line.data());
                 if(DataAsString.section("wlan0",1,1).section(" ",0,0,QString::SectionSkipEmpty).compare("unassociated")<0){
                     flag_wificonnect =false;
                     ui->m_label_state->setText("Connected");
@@ -284,13 +302,16 @@ void WIFI::on_m_button_check_clicked()
             ui->m_label_state->setText("Not connected ");
             //emit signal_iswificonnection(false);
         }
-        sleep(1);
+        QThread::sleep(1);
+
         try_wificonnect++;
     }
 }
 
-void WIFI::on_m_button_delete_clicked()
+void WIFI::on_m_button_scan_clicked()
 {
+    //qDebug()<<"Scan clicked";
+    findActiveWirelessesSSID();
     findSSIDTimer = new QTimer();
     findSSIDTimer->setInterval(8000);
     connect(findSSIDTimer,SIGNAL(timeout()),this,SLOT(findActiveWirelessesSSID()));

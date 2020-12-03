@@ -13,6 +13,7 @@
 #include <QFile>
 #include <QProcess>
 #include <QTreeWidgetItem>
+#include <QThread>
 
 
 namespace Ui {
@@ -47,7 +48,7 @@ private slots:
 
     void on_m_button_check_clicked();
 
-    void on_m_button_delete_clicked();
+    void on_m_button_scan_clicked();
 
     void on_m_button_disconnect_clicked();
 
